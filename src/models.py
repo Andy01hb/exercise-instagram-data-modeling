@@ -7,31 +7,49 @@ from eralchemy2 import render_er
 
 Base = declarative_base()
 
-class Person(Base):
-    __tablename__ = 'person'
-    # Here we define columns for the table person
-    # Notice that each column is also a normal Python instance attribute.
+class User(Base):
+    __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
+    username = Column(String(250), nullable=False, unique=True)
+    email = Column(String(250), nullable=False, unique=True)
+    password = Column(String(250), nullable=False)
+    posts = relationship("Post", backref="user")
+    comments = relationship("Comment", backref="user")
+    likes = relationship("Like", backref="user")
 
-class Address(Base):
-    __tablename__ = 'address'
-    # Here we define columns for the table address.
-    # Notice that each column is also a normal Python instance attribute.
+class Post(Base):
+    __tablename__ = 'post'
     id = Column(Integer, primary_key=True)
-    street_name = Column(String(250))
-    street_number = Column(String(250))
-    post_code = Column(String(250), nullable=False)
-    person_id = Column(Integer, ForeignKey('person.id'))
-    person = relationship(Person)
+    image_url = Column(String(250), nullable=False)
+    description = Column(String(500))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    comments = relationship("Comment", backref="post")
+    likes = relationship("Like", backref="post")
 
-    def to_dict(self):
-        return {}
+class Comment(Base):
+    __tablename__ = 'comment'
+    id = Column(Integer, primary_key=True)
+    text = Column(String(500), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    post_id = Column(Integer, ForeignKey('post.id'))
+    user = relationship("User", backref="user_comments")
+    post = relationship("Post", backref="post_comments")
+
+class Like(Base):
+    __tablename__ = 'like'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    post_id = Column(Integer, ForeignKey('post.id'))
+    user = relationship("User", backref="user_likes")
+    post = relationship("Post", backref="post_likes")
+
+def to_dict(self):
+    return {}
 
 ## Draw from SQLAlchemy base
 try:
     result = render_er(Base, 'diagram.png')
     print("Success! Check the diagram.png file")
 except Exception as e:
-    print("There was a problem genering the diagram")
+    print("There was a problem generating the diagram")
     raise e
